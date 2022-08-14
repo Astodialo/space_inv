@@ -33,6 +33,10 @@ executable space-inv
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.14.3.0
+    build-depends:    base ^>=4.14.3.0,
+                      mtl,
+                      random,
+                      ansi-terminal,
+                      Unique
     hs-source-dirs:   app
     default-language: Haskell2010
