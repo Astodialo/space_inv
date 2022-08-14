@@ -91,12 +91,29 @@ moveAl :: [Point] -> [Point]
 moveAl = map (\(x,y) -> (x + 1, y))
 
 moveAliens :: (MonadState Game m) => m ()
-moveAliens = do
+moveAliens = do -- aliens . getAliens %= moveAl 
   game <- get
   let naliens = _getAliens (_aliens game)
   aliens .= Aliens (moveAl naliens)
-   
-  
+  -- aliens . getAliens .= moveAl (game ^. aliens . getAliens)
+  -- aliens . getAliens .= moveAl naliens
+
+moveSh :: [Point] -> [Point]
+moveSh = map (\(x,y) -> (x - 1, y))
+
+moveShots :: (MonadState Game m) => m ()
+moveShots = do
+      game <- get
+      let nshots = _getShots (_shots game)
+      shots .= Shots (moveSh nshots)
+
+newShot :: (MonadState Game m) => m ()
+newShot = do
+  ccraft <- gets (_getCraft . _craft)
+  cshots <- gets (_getShots . _shots)
+  let  nshot = moveSh [ccraft] 
+  shots .= Shots (nshot ++ cshots)
+
 renderGame :: (MonadIO m, MonadReader Config m, MonadState Game m) => m ()
 renderGame = do
   config <- ask
@@ -126,6 +143,8 @@ play = forever $ do
     'a' -> moveCraft L
     'd' -> moveCraft R
   moveAliens
+  moveShots
+  newShot
 
 main :: IO ()
 main = do
