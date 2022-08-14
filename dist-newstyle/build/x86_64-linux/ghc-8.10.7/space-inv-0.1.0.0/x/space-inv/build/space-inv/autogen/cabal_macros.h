@@ -10,9 +10,9 @@
   (major1) == 0 && (major2) <  1 || \
   (major1) == 0 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_space_inv */
-/* package Unique-0.4.7.9 */
+/* package Unique-0.4.7.1 */
 #ifndef VERSION_Unique
-#define VERSION_Unique "0.4.7.9"
+#define VERSION_Unique "0.4.7.1"
 #endif /* VERSION_Unique */
 #ifndef MIN_VERSION_Unique
 #define MIN_VERSION_Unique(major1,major2,minor) (\
@@ -40,6 +40,16 @@
   (major1) == 4 && (major2) <  14 || \
   (major1) == 4 && (major2) == 14 && (minor) <= 3)
 #endif /* MIN_VERSION_base */
+/* package lens-5.1.1 */
+#ifndef VERSION_lens
+#define VERSION_lens "5.1.1"
+#endif /* VERSION_lens */
+#ifndef MIN_VERSION_lens
+#define MIN_VERSION_lens(major1,major2,minor) (\
+  (major1) <  5 || \
+  (major1) == 5 && (major2) <  1 || \
+  (major1) == 5 && (major2) == 1 && (minor) <= 1)
+#endif /* MIN_VERSION_lens */
 /* package mtl-2.2.2 */
 #ifndef VERSION_mtl
 #define VERSION_mtl "2.2.2"

@@ -1,45 +1,42 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments, TemplateHaskell, FlexibleContexts #-}
 
 module Main where
 
 import Control.Monad.Reader
 import Control.Monad.State
 import System.Console.ANSI
+import Control.Concurrent
 import System.Random
 import Data.List.Unique
 import System.IO
+import Control.Lens
+import Control.Lens.TH
 
 setNoBuffering :: IO ()
 setNoBuffering = do
   hSetBuffering stdin NoBuffering
   hSetBuffering stdout NoBuffering
 
-main :: IO ()
-main = do
-  setNoBuffering
-  hideCursor
-  config <- mkConfig
-  game   <- mkGame
-  print game
-  runStateT (runReaderT renderGame config) game
-  showCursor
-  return ()
-
-play :: ReaderT Config (StateT Game IO) ()
-play = undefined 
-
 type Size      = (Int, Int)
 data Config    = Config { _size :: Size }
+makeLenses ''Config
 
 type Row       = Int
 type Col       = Int
 type Point     = (Int, Int)
-newtype Craft  = Craft { _getSnake :: Point } deriving Show
+newtype Craft  = Craft { _getCraft :: Point } deriving Show
+makeLenses ''Craft
+
 newtype Aliens = Aliens { _getAliens :: [Point] } deriving Show
+makeLenses '' Aliens
+
 newtype Shots  = Shots { _getShots :: [Point] } deriving Show
+makeLenses '' Shots
+
 data Direction = L | R | N  deriving Show
 type Score     = Int
 data Status    = On | Over deriving Show
+
 data Game      = Game
   { _craft     :: Craft
   , _aliens    :: Aliens
@@ -49,6 +46,8 @@ data Game      = Game
   , _status    :: Status
   } deriving Show 
 
+makeLenses ''Game
+
 mkConfig :: IO Config
 mkConfig = do
   Just (mrow, mcol) <- getTerminalSize
@@ -57,31 +56,63 @@ mkConfig = do
 mkGame :: IO Game
 mkGame = do
   Just (mRow, mCol) <- getTerminalSize
-  let sRow = mRow `div` 2
+  let sRow = mRow 
   let sCol = mCol `div` 2
-  aCols <- replicateM 10 $ randomRIO (0, mCol-1)
-  aRows <- replicateM 10 $ randomRIO (0, 1)
+  aCols <- replicateM 10 $ randomRIO (1, mCol-2)
+  aRows <- replicateM 10 $ randomRIO (2, 2)
   return $ Game
-    { _craft     = Craft (sRow, sCol)
+    { _craft     = Craft (sRow - 2, sCol)
     , _aliens    = Aliens $ unique $ zip aRows aCols
-    , _shots     = Shots [(sRow + 1, sCol)]
+    , _shots     = Shots [(sRow - 3, sCol)]
     , _score     = 0
     , _direction = N
     , _status    = On
     }
 
-renderPoint :: (Row, Col) -> Char -> IO ()
-renderPoint (r, c) x = setCursorPosition r c >> putChar x
+liftS :: State s a -> ReaderT r (StateT s IO) a
+liftS sg = lift $ StateT $ \g -> let (a, g') = runState sg g in return (a, g')
 
-renderGame :: ReaderT Config (StateT Game IO) ()
+changeScore :: MonadState Game m => m ()
+changeScore = score %= (+ 1)
+
+renderPoint :: Char -> (Row, Col) -> IO ()
+renderPoint x (r, c) = setCursorPosition r c >> putChar x
+
+renderGame :: (MonadIO m, MonadReader Config m, MonadState Game m) => m ()
 renderGame = do
   config <- ask
   game   <- get
   let (mrow, mcol) = _size config 
       aliens  = _aliens game
       Craft (crow, ccol) = _craft game
-  liftIO (forM_ (_getAliens aliens) \(row, col) -> do
-    setCursorPosition row col
-    putChar '@')
-  _ <- lift . lift $ getChar
-  liftIO $ renderPoint (crow, ccol) '^'
+      shots    = _shots game
+  liftIO clearScreen
+  liftIO (forM_ (zip (repeat 1) [0..mcol]) (renderPoint '#')) 
+  liftIO (forM_ (zip (repeat (mrow - 1)) [0..mcol]) (renderPoint '#')) 
+  liftIO (forM_ (zip [1..mrow] (repeat 0)) (renderPoint '#')) 
+  liftIO (forM_ (zip [1..mrow] (repeat (mcol - 1))) (renderPoint '#')) 
+  liftIO (forM_ (_getAliens aliens) \(row, col) -> renderPoint '@' (row, col))   
+  liftIO $ renderPoint 'W' (crow, ccol)
+  liftIO (forM_ (_getShots shots) \(row, col) -> renderPoint '|' (row, col))
+  liftIO $ setCursorPosition 0 (mcol - 3)
+  liftIO (print $ _score game)
+  return ()
+
+play :: ReaderT Config (StateT Game IO) ()
+play = do
+  renderGame
+  liftIO $ threadDelay (10 ^ 6)
+  changeScore
+  renderGame
+
+main :: IO ()
+main = do
+  setNoBuffering
+  hideCursor
+  config <- mkConfig
+  game   <- mkGame
+  runStateT (runReaderT play config) game
+  _ <- liftIO $ getChar
+  showCursor
+  return ()
+
