@@ -38,7 +38,7 @@ mkGame = do
   Just (mRow, mCol) <- getTerminalSize
   let sRow = mRow `div` 2
   let sCol = mCol `div` 2
-  aCols <- replicateM 10 $ randomRIO (0, mCol)
+  aCols <- replicateM 10 $ randomRIO (0, mCol-1)
   aRows <- replicateM 10 $ randomRIO (0, 1)
   return $ Game
     { _craft     = Craft (sRow, sCol)
@@ -56,6 +56,8 @@ renderGame = do
   let (mrow, mcol) = _size config 
       aliens = _aliens game
   lift . lift $ clearScreen
-  let aliens (a:as) = lift . lift $ setCursorPosition a >>= putChar '@' >>= aliens a
+  lift . lift $ mapM_ setCursorPosition >>= putChar '@' aliens
+  --let aliens [] = lift . lift return ()
+  --let aliens (a:as) = (lift . lift) (setCursorPosition a) >> putChar '@' >>= aliens as
   _ <- lift . lift $ getChar
   return ()
