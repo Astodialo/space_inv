@@ -33,7 +33,7 @@ makeLenses '' Aliens
 newtype Shots  = Shots { _getShots :: [Point] } deriving Show
 makeLenses '' Shots
 
-data Direction = L | R | N  deriving Show
+data Direction = L | R deriving Show
 type Score     = Int
 data Status    = On | Over deriving Show
 
@@ -65,19 +65,43 @@ mkGame = do
     , _aliens    = Aliens $ unique $ zip aRows aCols
     , _shots     = Shots [(sRow - 3, sCol)]
     , _score     = 0
-    , _direction = N
+    , _direction = R
     , _status    = On
     }
 
-liftS :: State s a -> ReaderT r (StateT s IO) a
-liftS sg = lift $ StateT $ \g -> let (a, g') = runState sg g in return (a, g')
+-- isValidDirection :: (MonadState m) => Direction -> m Bool
 
-changeScore :: MonadState Game m => m ()
-changeScore = score %= (+ 1)
+chDirec :: (MonadState Game m) => Direction -> m ()
+chDirec d1= do
+  d0 <- fmap _direction get
+  direction .= d1
 
-renderPoint :: Char -> (Row, Col) -> IO ()
-renderPoint x (r, c) = setCursorPosition r c >> putChar x
+moveCr :: Direction -> Point -> Point
+moveCr L (r, c) = (r, c - 1)
+moveCr R (r, c) = (r, c + 1)
 
+moveCraft :: MonadState Game m => Direction -> m ()
+moveCraft d = do
+  game <- get
+  let Craft (row, col) = _craft game
+      newC = moveCr d (row, col)
+  put game { _craft = Craft newC }
+
+moveAl :: [Point] -> [Point]
+moveAl [] = []
+moveAl ((x, y) : xs)= (x, y - 1) : moveAl xs 
+
+moveAliens :: (MonadState Game m) => m ()
+moveAliens = do
+  game <- get
+  let naliens (x:xs) = _getAliens (_aliens game)
+      naliens [] = [] 
+      naliens (x:xs) = do
+        moveAl x
+        naliens xs
+  aliens .= naliens
+   
+  
 renderGame :: (MonadIO m, MonadReader Config m, MonadState Game m) => m ()
 renderGame = do
   config <- ask
@@ -86,6 +110,7 @@ renderGame = do
       aliens  = _aliens game
       Craft (crow, ccol) = _craft game
       shots    = _shots game
+      renderPoint x (r, c) = setCursorPosition r c >> putChar x
   liftIO clearScreen
   liftIO (forM_ (zip (repeat 1) [0..mcol]) (renderPoint '#')) 
   liftIO (forM_ (zip (repeat (mrow - 1)) [0..mcol]) (renderPoint '#')) 
@@ -99,11 +124,12 @@ renderGame = do
   return ()
 
 play :: ReaderT Config (StateT Game IO) ()
-play = do
+play = forever $ do
   renderGame
-  liftIO $ threadDelay (10 ^ 6)
-  changeScore
-  renderGame
+  c <- lift . lift $ getChar
+  case c of 
+    'a' -> moveCraft L
+    'd' -> moveCraft R
 
 main :: IO ()
 main = do

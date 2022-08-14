@@ -38,6 +38,8 @@ executable space-inv
                       random,
                       ansi-terminal,
                       Unique,
-                      lens
+                      lens,
+                      text,
+                      containers
     hs-source-dirs:   app
     default-language: Haskell2010

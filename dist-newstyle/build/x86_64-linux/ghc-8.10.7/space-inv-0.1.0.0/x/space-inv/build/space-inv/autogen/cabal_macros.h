@@ -40,6 +40,16 @@
   (major1) == 4 && (major2) <  14 || \
   (major1) == 4 && (major2) == 14 && (minor) <= 3)
 #endif /* MIN_VERSION_base */
+/* package containers-0.6.5.1 */
+#ifndef VERSION_containers
+#define VERSION_containers "0.6.5.1"
+#endif /* VERSION_containers */
+#ifndef MIN_VERSION_containers
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  6 || \
+  (major1) == 0 && (major2) == 6 && (minor) <= 5)
+#endif /* MIN_VERSION_containers */
 /* package lens-5.1.1 */
 #ifndef VERSION_lens
 #define VERSION_lens "5.1.1"
@@ -70,6 +80,16 @@
   (major1) == 1 && (major2) <  2 || \
   (major1) == 1 && (major2) == 2 && (minor) <= 1)
 #endif /* MIN_VERSION_random */
+/* package text-1.2.4.1 */
+#ifndef VERSION_text
+#define VERSION_text "1.2.4.1"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  2 || \
+  (major1) == 1 && (major2) == 2 && (minor) <= 4)
+#endif /* MIN_VERSION_text */
 
 /* tool gcc-11 */
 #ifndef TOOL_VERSION_gcc
