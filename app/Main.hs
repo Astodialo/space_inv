@@ -88,18 +88,13 @@ moveCraft d = do
   put game { _craft = Craft newC }
 
 moveAl :: [Point] -> [Point]
-moveAl [] = []
-moveAl ((x, y) : xs)= (x, y - 1) : moveAl xs 
+moveAl = map (\(x,y) -> (x + 1, y))
 
 moveAliens :: (MonadState Game m) => m ()
 moveAliens = do
   game <- get
-  let naliens (x:xs) = _getAliens (_aliens game)
-      naliens [] = [] 
-      naliens (x:xs) = do
-        moveAl x
-        naliens xs
-  aliens .= naliens
+  let naliens = _getAliens (_aliens game)
+  aliens .= Aliens (moveAl naliens)
    
   
 renderGame :: (MonadIO m, MonadReader Config m, MonadState Game m) => m ()
@@ -130,6 +125,7 @@ play = forever $ do
   case c of 
     'a' -> moveCraft L
     'd' -> moveCraft R
+  moveAliens
 
 main :: IO ()
 main = do
