@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+
 module Main where
 
 import Control.Monad.Reader
@@ -5,11 +7,23 @@ import Control.Monad.State
 import System.Console.ANSI
 import System.Random
 import Data.List.Unique
+import System.IO
+
+setNoBuffering :: IO ()
+setNoBuffering = do
+  hSetBuffering stdin NoBuffering
+  hSetBuffering stdout NoBuffering
 
 main :: IO ()
 main = do
-  game <- mkGame
+  setNoBuffering
+  hideCursor
+  config <- mkConfig
+  game   <- mkGame
   print game
+  runStateT (runReaderT renderGame config) game
+  showCursor
+  return ()
 
 play :: ReaderT Config (StateT Game IO) ()
 play = undefined 
@@ -17,6 +31,8 @@ play = undefined
 type Size      = (Int, Int)
 data Config    = Config { _size :: Size }
 
+type Row       = Int
+type Col       = Int
 type Point     = (Int, Int)
 newtype Craft  = Craft { _getSnake :: Point } deriving Show
 newtype Aliens = Aliens { _getAliens :: [Point] } deriving Show
@@ -33,6 +49,11 @@ data Game      = Game
   , _status    :: Status
   } deriving Show 
 
+mkConfig :: IO Config
+mkConfig = do
+  Just (mrow, mcol) <- getTerminalSize
+  return $ Config { _size = (mrow, mcol)}
+
 mkGame :: IO Game
 mkGame = do
   Just (mRow, mCol) <- getTerminalSize
@@ -48,16 +69,19 @@ mkGame = do
     , _direction = N
     , _status    = On
     }
-    
+
+renderPoint :: (Row, Col) -> Char -> IO ()
+renderPoint (r, c) x = setCursorPosition r c >> putChar x
+
 renderGame :: ReaderT Config (StateT Game IO) ()
 renderGame = do
   config <- ask
   game   <- get
   let (mrow, mcol) = _size config 
-      aliens = _aliens game
-  lift . lift $ clearScreen
-  lift . lift $ mapM_ setCursorPosition >>= putChar '@' aliens
-  --let aliens [] = lift . lift return ()
-  --let aliens (a:as) = (lift . lift) (setCursorPosition a) >> putChar '@' >>= aliens as
+      aliens  = _aliens game
+      Craft (crow, ccol) = _craft game
+  liftIO (forM_ (_getAliens aliens) \(row, col) -> do
+    setCursorPosition row col
+    putChar '@')
   _ <- lift . lift $ getChar
-  return ()
+  liftIO $ renderPoint (crow, ccol) '^'
