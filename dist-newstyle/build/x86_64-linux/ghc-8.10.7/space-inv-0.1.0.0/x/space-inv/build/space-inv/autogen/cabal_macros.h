@@ -50,15 +50,15 @@
   (major1) == 0 && (major2) <  6 || \
   (major1) == 0 && (major2) == 6 && (minor) <= 5)
 #endif /* MIN_VERSION_containers */
-/* package lens-5.1.1 */
+/* package lens-5.2 */
 #ifndef VERSION_lens
-#define VERSION_lens "5.1.1"
+#define VERSION_lens "5.2"
 #endif /* VERSION_lens */
 #ifndef MIN_VERSION_lens
 #define MIN_VERSION_lens(major1,major2,minor) (\
   (major1) <  5 || \
-  (major1) == 5 && (major2) <  1 || \
-  (major1) == 5 && (major2) == 1 && (minor) <= 1)
+  (major1) == 5 && (major2) <  2 || \
+  (major1) == 5 && (major2) == 2 && (minor) <= 0)
 #endif /* MIN_VERSION_lens */
 /* package mtl-2.2.2 */
 #ifndef VERSION_mtl

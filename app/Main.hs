@@ -98,6 +98,17 @@ moveAliens = do -- aliens . getAliens %= moveAl
   -- aliens . getAliens .= moveAl (game ^. aliens . getAliens)
   -- aliens . getAliens .= moveAl naliens
 
+newAliens :: (MonadIO m, MonadState Game m, MonadReader Config m) => m()
+newAliens = do
+  config <- ask
+  game <- get
+  cAliens <- gets (_getAliens . _aliens)
+  let (mrow, mcol) = _size config
+  aCols <- replicateM 10 $ randomRIO (1, mcol-2)
+  aRows <- replicateM 10 $ randomRIO (2, 2)
+  let nAliens = Aliens $ unique $ zip aRows aCols
+  aliens .= Aliens (cAliens ++ _getAliens  nAliens)
+
 moveSh :: [Point] -> [Point]
 moveSh = map (\(x,y) -> (x - 1, y))
 
@@ -145,6 +156,7 @@ play = forever $ do
   moveAliens
   moveShots
   newShot
+  newAliens
 
 main :: IO ()
 main = do
