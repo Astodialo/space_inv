@@ -12,42 +12,16 @@ import System.IO
 import Control.Lens
 import Control.Lens.TH
 
+import Data
+
 setNoBuffering :: IO ()
 setNoBuffering = do
   hSetBuffering stdin NoBuffering
   hSetBuffering stdout NoBuffering
 
-type Size      = (Int, Int)
-data Config    = Config { _size :: Size }
-makeLenses ''Config
 
 type Row       = Int
 type Col       = Int
-type Point     = (Int, Int)
-newtype Craft  = Craft { _getCraft :: Point } deriving Show
-makeLenses ''Craft
-
-newtype Aliens = Aliens { _getAliens :: [Point] } deriving Show
-makeLenses '' Aliens
-
-newtype Shots  = Shots { _getShots :: [Point] } deriving Show
-makeLenses '' Shots
-
-data Direction = L | R deriving Show
-type Score     = Int
-data Status    = On | Over deriving Show
-
-data Game      = Game
-  { _craft     :: Craft
-  , _aliens    :: Aliens
-  , _shots     :: Shots
-  , _score     :: Score
-  , _direction :: Direction
-  , _status    :: Status
-  } deriving Show 
-
-makeLenses ''Game
-
 mkConfig :: IO Config
 mkConfig = do
   Just (mrow, mcol) <- getTerminalSize
